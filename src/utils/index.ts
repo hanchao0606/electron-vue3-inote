@@ -152,9 +152,7 @@ export const openImageAsNewWindow = (img: Element) => {
     {
       ...browserWindowOption(),
       width: winOptWidth,
-      height: winOptHeight,
-      minWidth: winWidth,
-      minHeight: winHeight
+      height: winOptHeight
     },
     `/image-preview?src=${(img as HTMLImageElement).src}`,
     false

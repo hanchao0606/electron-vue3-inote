@@ -50,15 +50,14 @@ export const browserWindowOption = (type?: 'editor'): Electron.BrowserWindowCons
   // 底部icon: 40*40
   const editorWindowOptions = {
     width: devWid || 290,
-    height: devHei || 320,
-    minWidth: 290
+    height: devHei || 320
   };
   const commonOptions: Electron.BrowserWindowConstructorOptions = {
-    minHeight: 48,
     frame: false,
     hasShadow: true,
     transparent: true,
     fullscreen: false,
+    type: 'toolbar',
     webPreferences: {
       enableRemoteModule: true,
       nodeIntegration: true,

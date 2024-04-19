@@ -1,5 +1,9 @@
 <template>
   <header class="header flex-between">
+    <!--悬浮到右侧-->
+    <button class="icon flex-center" @click="goLevitate" title="悬浮">
+      <i class="iconfont flex-center icon-refresh"></i>
+    </button>
     <template v-if="currentRouteName === 'setting'">
       <button class="icon flex-center" title="返回">
         <router-link class="flex-center" to="/">
@@ -69,7 +73,39 @@ const editorWinOptions = browserWindowOption('editor');
 const openNewWindow = () => {
   createBrowserWindow(editorWinOptions, '/editor', false);
 };
-
+// 悬浮
+const goLevitate = () => {
+  const { screen } = remote;
+  // 获取屏幕的宽度和高度
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  // 设置窗口的位置到屏幕右侧
+  // 设置窗口的新位置
+  let newX = width - 30;
+  let newY = (height - 100) / 2;
+  currentWindow.setSize(30, 30);
+  // 初始位置
+  let [startCurrentX, startCurrentY] = currentWindow.getPosition();
+  let currentYFlag = true;
+  // 判断窗口y轴的位置与要更新的位置大小
+  if (startCurrentY > newY) currentYFlag = false;
+  // 逐步移动窗口到新位置
+  let interval = setInterval(() => {
+    let [currentX, currentY] = currentWindow.getPosition();
+    if (currentX < newX) currentX = currentX + 30;
+    if (currentYFlag) {
+      if (currentY < newY) currentY = currentY + 1;
+    } else {
+      if (currentY > newY) currentY = currentY - 1;
+    }
+    currentWindow.setPosition(currentX, currentY);
+    // 当窗口到达新位置时停止动画
+    if (currentX >= newX && (currentYFlag ? currentY >= newY : newY >= currentY)) {
+      clearInterval(interval);
+      currentWindow.setPosition(newX, newY);
+    }
+  }, 1); // 10毫秒更新一次位置
+  currentWindow.setAlwaysOnTop(true, 'normal');
+};
 // 获取窗口固定状态
 let isAlwaysOnTop = ref(false);
 const currentWindow = remote.getCurrentWindow();
@@ -124,6 +160,7 @@ const a = () => {
   opacity: 0;
   animation: header-fadein 0.4s reverse;
 }
+
 .header-fadein-enter-active,
 .header-fadein-leave-active {
   opacity: 0;
@@ -135,6 +172,7 @@ const a = () => {
     opacity: 0;
     margin-right: -14px;
   }
+
   to {
     opacity: 1;
     margin-right: 0;
@@ -146,39 +184,47 @@ const a = () => {
   background-color: @white-color;
   position: relative;
   z-index: 99;
+
   button {
     padding: 0;
     outline: none;
     border: none;
     background-color: transparent;
   }
+
   a {
     color: initial;
     width: 100%;
     height: 100%;
     outline: none;
   }
+
   .icon {
     width: @iconSize;
     height: @iconSize;
+
     .iconfont {
       // 头部icon大小在这里设置
       font-size: @headerIconFontSize;
       padding-bottom: 2px;
     }
   }
+
   .close-window:hover {
     background-color: @error-color;
     color: @white-color;
   }
+
   @keyframes fades {
     30% {
       opacity: 0;
     }
+
     100% {
       opacity: 1;
     }
   }
+
   .drag-header {
     -webkit-app-region: drag;
     height: 36px;
@@ -190,18 +236,21 @@ const a = () => {
     box-sizing: border-box;
   }
 }
+
 .thepin {
   width: 40px;
   height: 40px;
   overflow: hidden;
   position: relative;
   transition: all 0.4s;
+
   .absolute-box {
     position: absolute;
     top: 0;
     transition: all 0.4s;
   }
 }
+
 .thepin-active .absolute-box {
   top: -40px;
 }
