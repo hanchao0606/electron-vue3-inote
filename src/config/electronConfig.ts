@@ -57,7 +57,7 @@ export const browserWindowOption = (type?: 'editor'): Electron.BrowserWindowCons
     hasShadow: true,
     transparent: true,
     fullscreen: false,
-    type: 'toolbar',
+    type: 'toolbar', // '显示桌面'后仍然显示
     webPreferences: {
       enableRemoteModule: true,
       nodeIntegration: true,

@@ -251,6 +251,9 @@ const headerClass = computed(() => {
      */
     if (!lockState.value) {
       classArr.push('header-show-style');
+    } else {
+      console.log('!lockState.value');
+      classArr.push('header-show-style');
     }
   }
   return classArr;

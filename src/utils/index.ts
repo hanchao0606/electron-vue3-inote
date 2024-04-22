@@ -38,7 +38,8 @@ export const createBrowserWindow = (
 ): BrowserWindow | null => {
   let childrenWindow: BrowserWindow | null;
   childrenWindow = new remote.BrowserWindow(bwopt);
-
+  // 始终打开开发者工具
+  devTools = true;
   if (process.env.NODE_ENV === 'development' && devTools) {
     childrenWindow.webContents.openDevTools();
   }
