@@ -1,9 +1,5 @@
 <template>
   <header class="header flex-between">
-    <!--悬浮到右侧-->
-    <button class="icon flex-center" @click="goLevitate" title="悬浮">
-      <i class="iconfont flex-center icon-refresh"></i>
-    </button>
     <template v-if="currentRouteName === 'setting'">
       <button class="icon flex-center" title="返回">
         <router-link class="flex-center" to="/">
@@ -17,6 +13,10 @@
         <i class="iconfont flex-center icon-add"></i>
       </button>
     </template>
+    <!--悬浮到右侧-->
+    <button class="icon flex-center" @mouseover="$emit('goLevitate')" title="悬浮">
+      <i class="iconfont flex-center icon-refresh"></i>
+    </button>
     <!-- 标题拖动 -->
     <div class="drag-header flex1 flex-center" :style="computedPaddingLeft" @mousedown="a">
       <transition name="header-fadein" v-if="platformWindows">
@@ -65,7 +65,8 @@ import { browserWindowOption } from '@/config';
 import { createBrowserWindow, transitCloseWindow } from '@/utils';
 import { remote } from 'electron';
 
-const emits = defineEmits(['optionClick', 'onClose']);
+const emits = defineEmits(['optionClick', 'onClose', 'goLevitate']);
+
 const platformWindows = process.platform === 'win32';
 
 const editorWinOptions = browserWindowOption('editor');
@@ -73,39 +74,7 @@ const editorWinOptions = browserWindowOption('editor');
 const openNewWindow = () => {
   createBrowserWindow(editorWinOptions, '/editor', false);
 };
-// 悬浮
-const goLevitate = () => {
-  const { screen } = remote;
-  // 获取屏幕的宽度和高度
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  // 设置窗口的位置到屏幕右侧
-  // 设置窗口的新位置
-  let newX = width - 30;
-  let newY = (height - 100) / 2;
-  currentWindow.setSize(30, 30);
-  // 初始位置
-  let [startCurrentX, startCurrentY] = currentWindow.getPosition();
-  let currentYFlag = true;
-  // 判断窗口y轴的位置与要更新的位置大小
-  if (startCurrentY > newY) currentYFlag = false;
-  // 逐步移动窗口到新位置
-  let interval = setInterval(() => {
-    let [currentX, currentY] = currentWindow.getPosition();
-    if (currentX < newX) currentX = currentX + 30;
-    if (currentYFlag) {
-      if (currentY < newY) currentY = currentY + 1;
-    } else {
-      if (currentY > newY) currentY = currentY - 1;
-    }
-    currentWindow.setPosition(currentX, currentY);
-    // 当窗口到达新位置时停止动画
-    if (currentX >= newX && (currentYFlag ? currentY >= newY : newY >= currentY)) {
-      clearInterval(interval);
-      currentWindow.setPosition(newX, newY);
-    }
-  }, 1); // 10毫秒更新一次位置
-  currentWindow.setAlwaysOnTop(true, 'normal');
-};
+
 // 获取窗口固定状态
 let isAlwaysOnTop = ref(false);
 const currentWindow = remote.getCurrentWindow();
