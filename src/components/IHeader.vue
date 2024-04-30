@@ -1,5 +1,5 @@
 <template>
-  <header class="header flex-between">
+  <header v-if="!isLevitating" class="header flex-between">
     <template v-if="currentRouteName === 'setting'">
       <button class="icon flex-center" title="返回">
         <router-link class="flex-center" to="/">
@@ -14,7 +14,7 @@
       </button>
     </template>
     <!--悬浮到右侧-->
-    <button class="icon flex-center" @mouseover="$emit('goLevitate')" title="悬浮">
+    <button class="icon flex-center" @mouseover="goLevitate" title="悬浮">
       <i class="iconfont flex-center icon-refresh"></i>
     </button>
     <!-- 标题拖动 -->
@@ -56,6 +56,13 @@
       </button>
     </div>
   </header>
+
+  <!-- 悬浮页面，始终显示在最上层 " -->
+  <teleport v-if="isLevitating" to="body > *:first-child">
+    <div class="levitate-page-overlay">
+      <GoLevitate @close="hideLevitate" :isLevitating="isLevitating" />
+    </div>
+  </teleport>
 </template>
 
 <script setup lang="ts">
@@ -64,8 +71,66 @@ import { onBeforeRouteUpdate, useRoute } from 'vue-router';
 import { browserWindowOption } from '@/config';
 import { createBrowserWindow, transitCloseWindow } from '@/utils';
 import { remote } from 'electron';
+import GoLevitate from '@/components/IGoLevitate.vue'; // 悬浮组件
 
-const emits = defineEmits(['optionClick', 'onClose', 'goLevitate']);
+// 是否显示悬浮页面的状态
+const isLevitating = ref(false);
+window.isLevitating_ = isLevitating;
+// 触发悬浮页面显示的方法
+const showLevitate = () => {
+  isLevitating.value = true;
+};
+
+// 触发悬浮页面隐藏的方法
+const hideLevitate = () => {
+  isLevitating.value = false;
+  currentWindow.setSize(600, 600);
+
+  let [currentX, currentY] = currentWindow.getPosition();
+  currentWindow.setPosition(currentX - 600, currentY - 300);
+};
+
+// 悬浮
+const goLevitate = () => {
+  showLevitate();
+
+  const { screen } = remote;
+  // 获取屏幕的宽度和高度
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  // 设置窗口的位置到屏幕右侧
+  // 设置窗口的新位置
+  let newX = width - 30;
+  let newY = (height - 100) / 2;
+  currentWindow.setSize(30, 30);
+
+  // 初始位置
+  let [startCurrentX, startCurrentY] = currentWindow.getPosition();
+
+  // 初始位置Y轴方向的上面还是下面
+  let currentYFlag = true;
+  // 判断窗口y轴的位置与要更新的位置大小
+  if (startCurrentY > newY) currentYFlag = false;
+
+  // 逐步移动窗口到新位置
+  let interval = setInterval(() => {
+    let [currentX, currentY] = currentWindow.getPosition();
+    if (currentX < newX) currentX = currentX + 30;
+    if (currentYFlag) {
+      if (currentY < newY) currentY = currentY + 1;
+    } else {
+      if (currentY > newY) currentY = currentY - 1;
+    }
+    currentWindow.setPosition(currentX, currentY);
+    // 当窗口到达新位置时停止动画
+    if (currentX >= newX && (currentYFlag ? currentY >= newY : newY >= currentY)) {
+      clearInterval(interval);
+      currentWindow.setPosition(newX, newY);
+    }
+  }, 1); // 10毫秒更新一次位置
+  currentWindow.setAlwaysOnTop(true, 'normal');
+};
+const emits = defineEmits(['optionClick', 'onClose']);
 
 const platformWindows = process.platform === 'win32';
 
