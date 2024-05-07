@@ -1,5 +1,14 @@
 <template>
-  <header v-if="!isLevitating" class="header flex-between">
+  <header class="header flex-between">
+    <!--悬浮到右侧按钮-->
+    <button v-if="!isLevitating" class="icon flex-center" @mouseover="goLevitate" title="悬浮">
+      <i class="iconfont flex-center icon-refresh"></i>
+    </button>
+    <!-- 悬浮页面，始终显示在最上层 " -->
+    <div v-if="isLevitating" class="levitate-page-overlay">
+      <GoLevitate @close="hideLevitate" :isLevitating="isLevitating" :levitatingContent="levitatingContent" />
+    </div>
+
     <template v-if="currentRouteName === 'setting'">
       <button class="icon flex-center" title="返回">
         <router-link class="flex-center" to="/">
@@ -13,10 +22,7 @@
         <i class="iconfont flex-center icon-add"></i>
       </button>
     </template>
-    <!--悬浮到右侧-->
-    <button class="icon flex-center" @mouseover="goLevitate" title="悬浮">
-      <i class="iconfont flex-center icon-refresh"></i>
-    </button>
+
     <!-- 标题拖动 -->
     <div class="drag-header flex1 flex-center" :style="computedPaddingLeft" @mousedown="a">
       <transition name="header-fadein" v-if="platformWindows">
@@ -56,13 +62,6 @@
       </button>
     </div>
   </header>
-
-  <!-- 悬浮页面，始终显示在最上层 " -->
-  <teleport v-if="isLevitating" to="body > *:first-child">
-    <div class="levitate-page-overlay">
-      <GoLevitate @close="hideLevitate" :isLevitating="isLevitating" />
-    </div>
-  </teleport>
 </template>
 
 <script setup lang="ts">
@@ -72,10 +71,19 @@ import { browserWindowOption } from '@/config';
 import { createBrowserWindow, transitCloseWindow } from '@/utils';
 import { remote } from 'electron';
 import GoLevitate from '@/components/IGoLevitate.vue'; // 悬浮组件
+const { screen } = remote;
 
 // 是否显示悬浮页面的状态
 const isLevitating = ref(false);
+
+// 悬浮时的内容
+const levitatingContent = '哈哈哈';
+
 window.isLevitating_ = isLevitating;
+
+// 悬浮切换要存在一定时间间隔
+let levitatingInterval = true;
+
 // 触发悬浮页面显示的方法
 const showLevitate = () => {
   isLevitating.value = true;
@@ -83,18 +91,30 @@ const showLevitate = () => {
 
 // 触发悬浮页面隐藏的方法
 const hideLevitate = () => {
+  if (!levitatingInterval) return;
+  levitatingInterval = false;
+  setTimeout(() => {
+    levitatingInterval = true;
+  }, 1000);
   isLevitating.value = false;
   currentWindow.setSize(600, 600);
 
   let [currentX, currentY] = currentWindow.getPosition();
   currentWindow.setPosition(currentX - 600, currentY - 300);
+  // 透明度
+  currentWindow.setOpacity(0.97);
 };
 
 // 悬浮
 const goLevitate = () => {
-  showLevitate();
+  if (!levitatingInterval) return;
 
-  const { screen } = remote;
+  levitatingInterval = false;
+  setTimeout(() => {
+    levitatingInterval = true;
+  }, 1000);
+
+  showLevitate();
   // 获取屏幕的宽度和高度
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -102,12 +122,13 @@ const goLevitate = () => {
   // 设置窗口的新位置
   let newX = width - 30;
   let newY = (height - 100) / 2;
-  currentWindow.setSize(30, 30);
 
+  // 透明度
+  currentWindow.setOpacity(0.1);
   // 初始位置
   let [startCurrentX, startCurrentY] = currentWindow.getPosition();
 
-  // 初始位置Y轴方向的上面还是下面
+  // 初始位置在Y轴方向的上面还是下面
   let currentYFlag = true;
   // 判断窗口y轴的位置与要更新的位置大小
   if (startCurrentY > newY) currentYFlag = false;
@@ -129,6 +150,8 @@ const goLevitate = () => {
     }
   }, 1); // 10毫秒更新一次位置
   currentWindow.setAlwaysOnTop(true, 'normal');
+  // 窗口大小
+  currentWindow.setSize(30, 70);
 };
 const emits = defineEmits(['optionClick', 'onClose']);
 
