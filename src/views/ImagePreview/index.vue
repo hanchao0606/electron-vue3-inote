@@ -1,5 +1,5 @@
 <template>
-  <div class="image-preview">
+  <div class="image-preview bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb">
     <IHeader />
     <div class="image-warp flex-center">
       <img :src="imageSrc" />

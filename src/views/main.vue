@@ -1,7 +1,10 @@
 <template>
+  <!-- 根据是否显示悬浮页面来决定是否渲染 IHeader -->
   <IHeader v-if="routeName !== 'editor'" />
+
+  <!-- 根据是否显示悬浮页面来决定是否渲染主内容 -->
   <div class="bg-white">
-    <router-view v-slot="{ Component }">
+    <router-view v-slot="{ Component }" :key="routeName">
       <transition name="main-fade">
         <div class="transition" :key="routeName" :data-title="routeName">
           <keep-alive>
@@ -14,12 +17,15 @@
 </template>
 
 <script setup lang="ts">
+import { remote } from 'electron';
 import { ref, onBeforeUpdate } from 'vue';
 import { useRoute } from 'vue-router';
 import IHeader from '@/components/IHeader.vue';
 
+// 当前路由名称
 const routeName = ref(useRoute().name as string);
 
+// 在路由变化前更新 routeName
 onBeforeUpdate(() => {
   routeName.value = useRoute().name as string;
 });
